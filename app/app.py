@@ -2,15 +2,18 @@
 import os
 import pathlib
 import sys
+from io import BytesIO, StringIO
 from pathlib import Path
 from time import gmtime, strftime
 from urllib.parse import urlparse
 
 from selenium import webdriver
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 
+from PIL import Image
 from webdriver_manager.firefox import GeckoDriverManager
 
 
@@ -18,6 +21,7 @@ def setup_driver() -> webdriver.Firefox:
     """Create firefox driver for use."""
     firefox_options = Options()
     firefox_options.headless = True
+
     driver = webdriver.Firefox(
         options=firefox_options, executable_path=GeckoDriverManager().install()
     )
@@ -45,7 +49,32 @@ def take_screenshot(driver, save_directory):
     print(save_directory)
     print(now)
     print(filename)
-    return driver.save_screenshot(filename)
+
+    js = "return Math.max( document.body.scrollHeight, document.body.offsetHeight,  document.documentElement.clientHeight,  document.documentElement.scrollHeight,  document.documentElement.offsetHeight);"
+    scrollheight = driver.execute_script(js)
+    print(f"scrollheight: {scrollheight}")
+
+    slices = []
+    offset = 0
+
+    while offset < scrollheight:
+        print(offset)
+
+        driver.execute_script(f"window.scrollTo(0, {offset});")
+        img = Image.open(BytesIO(driver.get_screenshot_as_png()))
+
+        offset += img.size[1]
+        slices.append(img)
+        driver.get_screenshot_as_file(f"{save_directory}/{now}_{offset}.png")
+        print(scrollheight)
+
+    screenshot = Image.new("RGB", (slices[0].size[0], scrollheight))
+    offset = 0
+    for img in slices:
+        screenshot.paste(img, (0, offset))
+        offset += img.size[1]
+
+    screenshot.save(filename)
 
 
 def main(driver):
