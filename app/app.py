@@ -50,7 +50,7 @@ def take_screenshot(driver, save_directory):
     print(now)
     print(filename)
 
-    js = "return Math.max(document.body.scrollHeight, document.body.offsetHeight, document.documentElement.clientHeight, document.documentElement.scrollHeight, document.documentElement.offsetHeight);"
+    js = "return Math.max(document.body.scrollHeight, document.body.offsetHeight, document.documentElement.clientHeight, document.documentElement.scrollHeight, document.documentElement.offsetHeight);"  # noqa: E501
     scrollheight = driver.execute_script(js)
     print(f"scrollheight: {scrollheight}")
 
